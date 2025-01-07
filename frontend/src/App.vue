@@ -42,7 +42,26 @@
       </router-view>
     </el-main>
 
-
+    <el-footer class="mobile-footer" height="50px">
+      <div class="mobile-nav">
+        <router-link to="/network-calc" class="nav-item" active-class="active">
+          <el-icon><Monitor /></el-icon>
+          <span>网段计算</span>
+        </router-link>
+        <router-link to="/ip-summary" class="nav-item" active-class="active">
+          <el-icon><Collection /></el-icon>
+          <span>IP汇总</span>
+        </router-link>
+        <router-link to="/ip-conversion" class="nav-item" active-class="active">
+          <el-icon><Switch /></el-icon>
+          <span>IP转换</span>
+        </router-link>
+        <div class="nav-item" @click="showAbout">
+          <el-icon><InfoFilled /></el-icon>
+          <span>关于</span>
+        </div>
+      </div>
+    </el-footer>
 
     <el-dialog
       v-model="aboutDialogVisible"
@@ -381,5 +400,99 @@ body {
 .el-dialog__wrapper.dialog-fade-enter-active .el-dialog,
 .el-dialog__wrapper.dialog-fade-leave-active .el-dialog {
   transform: scale(1);
+}
+
+/* 移动端底部导航 */
+.mobile-footer {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.mobile-nav {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 100%;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #606266;
+  text-decoration: none;
+  font-size: 12px;
+  padding: 4px 0;
+  flex: 1;
+}
+
+.nav-item .el-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.nav-item.active {
+  color: var(--el-color-primary);
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .mobile-footer {
+    background: #1d1e1f;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .nav-item {
+    color: #a8abb2;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .header-content {
+    padding: 0 10px;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+    margin-right: 1rem;
+  }
+
+  .nav-menu {
+    display: none !important;
+  }
+
+  .about-btn {
+    display: none !important;
+  }
+
+  .mobile-footer {
+    display: block;
+  }
+
+  /* 为底部导航腾出空间 */
+  .app-main {
+    padding-bottom: 60px;
+  }
+
+  /* 调整对话框样式 */
+  .about-dialog {
+    width: 90% !important;
+    margin: 0 auto;
+  }
+
+  .feature-list {
+    gap: 10px;
+  }
+
+  .feature-item {
+    padding: 8px 15px;
+  }
 }
 </style> 

@@ -1,12 +1,12 @@
 <template>
-  <div class="ip-summary">
+  <div class="page-container">
     <el-card>
       <template #header>
-        <h2>IP汇总</h2>
+        <h2 class="page-title">IP汇总</h2>
       </template>
 
-      <el-form @submit.prevent="summarize">
-        <el-form-item>
+      <el-form @submit.prevent="summarize" class="page-form">
+        <el-form-item class="textarea-item">
           <el-input
             v-model="ipInput"
             type="textarea"
@@ -16,7 +16,7 @@
           </el-input>
         </el-form-item>
 
-        <el-form-item>
+        <el-form-item class="button-group">
           <el-button type="primary" @click="summarize" :loading="loading">汇总</el-button>
           <el-button @click="clearInput">清空输入</el-button>
           <el-button type="success" @click="copyResult" :disabled="!result.length">复制结果</el-button>
@@ -24,7 +24,7 @@
       </el-form>
 
       <div v-if="result.length" class="result">
-        <h3>汇总结果:</h3>
+        <h3 class="result-title">汇总结果:</h3>
         <el-input
           v-model="resultText"
           type="textarea"
@@ -84,10 +84,25 @@ export default {
       this.ipInput = ''
       this.result = []
     },
-    copyResult() {
-      navigator.clipboard.writeText(this.resultText)
-        .then(() => ElMessage.success('复制成功'))
-        .catch(() => ElMessage.error('复制失败'))
+    async copyResult() {
+      try {
+        await navigator.clipboard.writeText(this.resultText)
+        ElMessage.success('复制成功')
+      } catch (err) {
+        // 如果 clipboard API 失败，使用传统方法
+        const textarea = document.createElement('textarea')
+        textarea.value = this.resultText
+        document.body.appendChild(textarea)
+        textarea.select()
+        try {
+          document.execCommand('copy')
+          ElMessage.success('复制成功')
+        } catch (e) {
+          ElMessage.error('复制失败')
+        } finally {
+          document.body.removeChild(textarea)
+        }
+      }
     },
     handleKeydown(e) {
       if (e.ctrlKey && e.key === 'Enter') {
@@ -99,13 +114,12 @@ export default {
 </script>
 
 <style scoped>
-.ip-summary {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
+@import '../assets/styles/common.css';
 
-.result {
-  margin-top: 20px;
+/* 针对IP汇总的特殊样式 */
+@media screen and (max-width: 768px) {
+  :deep(.el-textarea__inner) {
+    min-height: 120px !important;
+  }
 }
 </style> 

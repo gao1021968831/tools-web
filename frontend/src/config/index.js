@@ -1,3 +1,13 @@
+// 开发环境配置
+const dev = {
+  baseURL: '/api'
+}
+
+// 生产环境配置
+const prod = {
+  baseURL: '/api'
+}
+
 export default {
-  baseURL: 'http://localhost:5000/api'
+  ...(process.env.NODE_ENV === 'production' ? prod : dev)
 } 

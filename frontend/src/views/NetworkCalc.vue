@@ -1,11 +1,11 @@
 <template>
-  <div class="network-calc">
+  <div class="page-container">
     <el-card>
       <template #header>
-        <h2>网段计算</h2>
+        <h2 class="page-title">网段计算</h2>
       </template>
 
-      <el-form :model="form" @submit.prevent="calculate" label-width="120px">
+      <el-form :model="form" @submit.prevent="calculate" class="page-form">
         <el-form-item label="IP地址">
           <el-input 
             v-model="form.ip" 
@@ -14,7 +14,7 @@
           </el-input>
         </el-form-item>
         
-        <el-form-item label="掩码">
+        <el-form-item label="IP掩码">
           <el-input 
             v-model="form.mask" 
             placeholder="请输入掩码"
@@ -22,7 +22,7 @@
           </el-input>
         </el-form-item>
         
-        <el-form-item>
+        <el-form-item class="button-group">
           <el-button type="primary" @click="calculate" :loading="loading">计算</el-button>
           <el-button @click="clearForm">清空</el-button>
         </el-form-item>
@@ -88,13 +88,61 @@ export default {
 </script>
 
 <style scoped>
-.network-calc {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
+@import '../assets/styles/common.css';
 
-.result {
-  margin-top: 20px;
+/* 针对网段计算的特殊样式 */
+@media screen and (max-width: 768px) {
+  :deep(.el-form-item__label) {
+    width: 80px !important;
+    padding-right: 8px;
+  }
+
+  :deep(.el-descriptions__cell) {
+    padding: 8px !important;
+  }
+
+  :deep(.el-descriptions__label) {
+    width: 120px;
+  }
+
+  /* 修复按钮组样式 */
+  .button-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .button-group :deep(.el-form-item__content) {
+    display: flex;
+    flex-direction: column;
+    margin-left: 0 !important;
+    width: 100%;
+  }
+
+  .button-group .el-button {
+    width: 100%;
+    margin-left: 0 !important;
+    margin-bottom: 10px;
+  }
+
+  .button-group .el-button:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 调整表单布局 */
+  :deep(.el-form-item__content) {
+    margin-left: 0 !important;
+  }
+
+  .el-form-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  :deep(.el-form-item__label) {
+    text-align: left;
+    margin-bottom: 4px;
+  }
 }
 </style> 

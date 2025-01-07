@@ -1,0 +1,86 @@
+/* 通用页面容器 */
+.page-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* 页面标题 */
+.page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--el-text-color-primary);
+}
+
+/* 表单样式 */
+.page-form {
+  width: 100%;
+}
+
+/* 按钮组 */
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* 结果区域 */
+.result {
+  margin-top: 20px;
+}
+
+.result-title {
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  color: var(--el-text-color-primary);
+}
+
+/* 文本域样式 */
+.textarea-item :deep(.el-textarea__inner) {
+  resize: none;
+  font-family: monospace;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 768px) {
+  .page-container {
+    padding: 10px;
+  }
+
+  .page-title {
+    font-size: 1.2rem;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .button-group .el-button {
+    width: 100%;
+  }
+
+  .result-title {
+    font-size: 1rem;
+  }
+
+  /* 调整输入框在移动端的显示 */
+  :deep(.el-textarea__inner) {
+    font-size: 14px;
+  }
+
+  /* 调整表单项间距 */
+  .el-form-item {
+    margin-bottom: 15px;
+  }
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .page-title,
+  .result-title {
+    color: var(--el-text-color-primary);
+  }
+} 
