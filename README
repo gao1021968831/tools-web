@@ -1,0 +1,219 @@
+
+
+我来帮你创建一个详细的 README.md 文件。
+
+```markdown:README.md
+# IP地址转换工具
+
+一个用于 IPv4 和 IPv6 地址互相转换的 Web 应用程序。该工具提供简单直观的界面，支持批量转换IP地址。
+
+## 功能特点
+
+- IPv4 转 IPv6 地址转换
+- IPv6 转 IPv4 地址转换
+- 批量转换支持
+- 自定义 IPv6 前缀
+- 简洁的用户界面
+- 支持复制结果
+
+## 技术栈
+
+### 后端
+- Python 3.8+
+- Flask
+- Gunicorn
+
+### 前端
+- Vue 3
+- Element Plus
+- Axios
+
+## 项目结构
+
+```
+ipconvert/
+├── backend/
+│   ├── app.py              # Flask 应用主文件
+│   ├── requirements.txt    # Python 依赖
+│   └── utils/             # 工具函数
+├── frontend/
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.js
+└── README.md
+```
+
+## 本地开发环境搭建
+
+### 后端设置
+
+```bash
+# 进入后端目录
+cd backend
+
+# 创建虚拟环境
+python -m venv venv
+
+# 激活虚拟环境
+# Windows
+venv\Scripts\activate
+# Linux/Mac
+source venv/bin/activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动开发服务器
+python app.py
+```
+
+### 前端设置
+
+```bash
+# 进入前端目录
+cd frontend
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+## 生产环境部署
+
+### 系统要求
+
+- CentOS 7+ / Ubuntu 18.04+
+- Python 3.8+
+- Node.js 16+
+- Nginx
+- Git
+
+### 部署步骤
+
+1. 克隆仓库
+```bash
+git clone <repository-url>
+cd ipconvert
+```
+
+2. 后端部署
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+3. 前端部署
+```bash
+cd frontend
+npm install
+npm run build
+```
+
+4. Nginx 配置
+```nginx
+server {
+    listen 80;
+    server_name your_domain.com;
+
+    location / {
+        root /path/to/frontend/dist;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+详细的部署指南请参考 [部署文档](docs/deployment.md)。
+
+## API 文档
+
+### 转换 IP 地址
+
+- **URL**: `/api/convert`
+- **Method**: `POST`
+- **请求体**:
+```json
+{
+    "direction": "4to6",  // 或 "6to4"
+    "ips": ["192.168.1.1"],
+    "ipv6Prefix": "2001:db8::"  // 可选，仅用于 4to6 转换
+}
+```
+- **响应**:
+```json
+{
+    "result": {
+        "192.168.1.1": "2001:db8::c0a8:101"
+    }
+}
+```
+
+完整的 API 文档请参考 [API文档](docs/api.md)。
+
+## 配置说明
+
+### 环境变量
+
+- `FLASK_ENV`: 运行环境 (development/production)
+- `FLASK_APP`: Flask 应用入口
+- `PORT`: 服务端口号
+
+## 常见问题
+
+1. **Q: IPv6地址转换失败？**
+   A: 请确保输入的IPv6地址格式正确，包含完整的地址段。
+
+2. **Q: 如何自定义IPv6前缀？**
+   A: 在转换界面的高级选项中可以设置自定义IPv6前缀。
+
+## 贡献指南
+
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+## 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+
+## 联系方式
+
+项目维护者 - [你的名字](hpu_gcg@163.com)
+
+项目链接: [https://github.com/yourusername/ipconvert](https://github.com/yourusername/ipconvert)
+```
+
+这个 README 文件包含了：
+
+1. 项目概述和功能特点
+2. 技术栈说明
+3. 项目结构
+4. 本地开发环境搭建步骤
+5. 生产环境部署指南
+6. API 文档
+7. 配置说明
+8. 常见问题解答
+9. 贡献指南
+10. 许可证信息
+11. 联系方式
+
+你可以根据实际情况修改以下内容：
+- 仓库URL
+- 联系信息
+- 具体的部署步骤
+- API 文档细节
+- 项目特定的配置说明
+
+需要对任何部分进行修改或补充，请告诉我。
