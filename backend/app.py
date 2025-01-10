@@ -11,9 +11,38 @@ from utils.ip_tools import (
     divide_network, query_ip_location
 )
 from utils.dns_tools import query_dns_records
+from utils.logger import app_logger, api_logger
+import time
 
 app = Flask(__name__)
 CORS(app)
+
+# 请求计时中间件
+@app.before_request
+def before_request():
+    request.start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    # 计算请求处理时间
+    duration = time.time() - request.start_time
+    
+    # 记录请求信息
+    api_logger.info(
+        f"Method: {request.method} | "
+        f"Path: {request.path} | "
+        f"Status: {response.status_code} | "
+        f"Duration: {duration:.3f}s | "
+        f"IP: {request.remote_addr} | "
+        f"User-Agent: {request.headers.get('User-Agent')}"
+    )
+    
+    return response
+
+@app.errorhandler(Exception)
+def handle_error(error):
+    app_logger.error(f"Error occurred: {str(error)}", exc_info=True)
+    return jsonify({'error': str(error)}), 500
 
 @app.route('/api/network/calculate', methods=['POST'])
 def calculate_network():
@@ -23,11 +52,14 @@ def calculate_network():
         mask = data.get('mask')
         
         if not ip or not mask:
+            api_logger.warning(f"Invalid input - IP: {ip}, Mask: {mask}")
             return jsonify({'error': 'IP和掩码不能为空'}), 400
             
         result = get_network_info(ip, mask)
+        api_logger.info(f"Network calculation successful - IP: {ip}, Mask: {mask}")
         return jsonify({'data': result})
     except Exception as e:
+        app_logger.error(f"Network calculation failed - IP: {ip}, Mask: {mask}", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
 @app.route('/api/ip/summary', methods=['POST'])
@@ -37,11 +69,14 @@ def summarize_ips():
         ip_ranges = data.get('ipRanges', [])
         
         if not ip_ranges:
+            api_logger.warning("Empty IP ranges list received")
             return jsonify({'error': 'IP列表不能为空'}), 400
             
         result = summarize_ip_ranges(ip_ranges)
+        api_logger.info(f"IP summary successful - Input count: {len(ip_ranges)}, Output count: {len(result)}")
         return jsonify({'data': result})
     except Exception as e:
+        app_logger.error("IP summary failed", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
 @app.route('/api/ip/convert', methods=['POST'])
@@ -53,19 +88,25 @@ def convert_ip():
         ipv6_prefix = data.get('ipv6Prefix', '')
         
         if not ips:
+            api_logger.warning("Empty IP list for conversion")
             return jsonify({'error': 'IP列表不能为空'}), 400
             
         if direction == 'v4tov6':
             if not ipv6_prefix:
+                api_logger.warning("Missing IPv6 prefix for v4tov6 conversion")
                 return jsonify({'error': 'IPv6前缀不能为空'}), 400
             result = convert_ip_v4_to_v6(ips, ipv6_prefix)
+            api_logger.info(f"IPv4 to IPv6 conversion successful - Count: {len(ips)}")
         elif direction == 'v6tov4':
             result = convert_ip_v6_to_v4(ips)
+            api_logger.info(f"IPv6 to IPv4 conversion successful - Count: {len(ips)}")
         else:
+            api_logger.warning(f"Invalid conversion direction: {direction}")
             return jsonify({'error': '无效的转换方向'}), 400
             
         return jsonify({'data': result})
     except Exception as e:
+        app_logger.error("IP conversion failed", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
 @app.route('/api/ip/format', methods=['POST'])
@@ -114,11 +155,14 @@ def divide_subnet():
         value = data.get('value')
         
         if not all([network, divide_type, value]):
+            api_logger.warning(f"Incomplete parameters - Network: {network}, Type: {divide_type}, Value: {value}")
             return jsonify({'error': '参数不完整'}), 400
             
         result = divide_network(network, divide_type, value)
+        api_logger.info(f"Network division successful - Network: {network}, Type: {divide_type}, Value: {value}")
         return jsonify({'data': result})
     except Exception as e:
+        app_logger.error(f"Network division failed - Network: {network}", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
 @app.route('/api/ip/location', methods=['POST'])
@@ -128,6 +172,7 @@ def get_ip_location():
         ips = data.get('ips', [])
         
         if not ips:
+            api_logger.warning("Empty IP list for location query")
             return jsonify({'error': 'IP列表不能为空'}), 400
             
         results = []
@@ -135,8 +180,10 @@ def get_ip_location():
             result = query_ip_location(ip.strip())
             results.append(result)
             
+        api_logger.info(f"IP location query successful - Count: {len(ips)}")
         return jsonify({'data': results})
     except Exception as e:
+        app_logger.error("IP location query failed", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
 @app.route('/api/dns/query', methods=['POST'])
@@ -147,15 +194,20 @@ def query_dns():
         record_types = data.get('types', [])
         
         if not domain:
+            api_logger.warning("Empty domain for DNS query")
             return jsonify({'error': '域名不能为空'}), 400
             
         if not record_types:
+            api_logger.warning(f"No record types specified for domain: {domain}")
             return jsonify({'error': '记录类型不能为空'}), 400
             
         results = query_dns_records(domain, record_types)
+        api_logger.info(f"DNS query successful - Domain: {domain}, Types: {record_types}")
         return jsonify({'data': results})
     except Exception as e:
+        app_logger.error(f"DNS query failed - Domain: {domain}", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
+    app_logger.info("Application starting...")
     app.run(debug=True) 
