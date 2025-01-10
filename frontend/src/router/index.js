@@ -1,7 +1,8 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import NetworkCalc from '../views/NetworkCalc.vue'
 import IpSummary from '../views/IpSummary.vue'
 import IpConversion from '../views/IpConversion.vue'
+import IpFormat from '../views/IpFormat.vue'
 
 const routes = [
   {
@@ -22,11 +23,16 @@ const routes = [
     path: '/ip-conversion',
     name: 'IpConversion',
     component: IpConversion
+  },
+  {
+    path: '/ip-format',
+    name: 'IpFormat',
+    component: IpFormat
   }
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes
 })
 

@@ -4,7 +4,10 @@ from utils.ip_tools import (
     get_network_info, 
     summarize_ip_ranges,
     convert_ip_v4_to_v6,
-    convert_ip_v6_to_v4
+    convert_ip_v6_to_v4,
+    ip_dec_to_bin, ip_bin_to_dec,
+    ip_dec_to_hex, ip_hex_to_dec,
+    mask_to_cidr, cidr_to_mask
 )
 
 app = Flask(__name__)
@@ -62,6 +65,43 @@ def convert_ip():
         return jsonify({'data': result})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+@app.route('/ip/format', methods=['POST'])
+def format_ip():
+    try:
+        data = request.get_json()
+        convert_type = data.get('type')
+        inputs = data.get('inputs', [])
+
+        if not inputs:
+            return jsonify({'error': '请输入需要转换的内容'}), 400
+
+        # 根据转换类型调用不同的转换函数
+        convert_funcs = {
+            'dec2bin': ip_dec_to_bin,
+            'bin2dec': ip_bin_to_dec,
+            'dec2hex': ip_dec_to_hex,
+            'hex2dec': ip_hex_to_dec,
+            'mask2cidr': mask_to_cidr,
+            'cidr2mask': cidr_to_mask
+        }
+
+        if convert_type not in convert_funcs:
+            return jsonify({'error': '不支持的转换类型'}), 400
+
+        # 执行转换
+        results = []
+        for ip in inputs:
+            try:
+                result = convert_funcs[convert_type](ip.strip())
+                results.append(result)
+            except ValueError as e:
+                return jsonify({'error': f'输入格式错误: {str(e)}'}), 400
+
+        return jsonify({'data': results})
+
+    except Exception as e:
+        return jsonify({'error': f'转换失败: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 

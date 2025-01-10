@@ -8,8 +8,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
-        // 如果后端接口没有 /api 前缀，可以重写路径
-        // rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   }

@@ -22,4 +22,12 @@ export function convertIp(data) {
     method: 'post',
     data
   })
+}
+
+export function formatIp(data) {
+  return request({
+    url: '/ip/format',
+    method: 'post',
+    data
+  })
 } 

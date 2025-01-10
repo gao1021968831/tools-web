@@ -23,6 +23,10 @@
             <el-icon><Switch /></el-icon>
             IP转换
           </el-menu-item>
+          <el-menu-item index="/ip-format">
+            <el-icon><Operation /></el-icon>
+            IP格式转换
+          </el-menu-item>
         </el-menu>
         <el-button 
           class="about-btn" 
@@ -55,6 +59,10 @@
         <router-link to="/ip-conversion" class="nav-item" active-class="active">
           <el-icon><Switch /></el-icon>
           <span>IP转换</span>
+        </router-link>
+        <router-link to="/ip-format" class="nav-item" active-class="active">
+          <el-icon><Operation /></el-icon>
+          <span>格式转换</span>
         </router-link>
         <div class="nav-item" @click="showAbout">
           <el-icon><InfoFilled /></el-icon>
@@ -104,7 +112,7 @@
 
 <script>
 import { ref } from 'vue'
-import { Monitor, Collection, Switch, InfoFilled } from '@element-plus/icons-vue'
+import { Monitor, Collection, Switch, InfoFilled, Operation } from '@element-plus/icons-vue'
 
 export default {
   name: 'App',
@@ -112,7 +120,8 @@ export default {
     Monitor,
     Collection,
     Switch,
-    InfoFilled
+    InfoFilled,
+    Operation
   },
   setup() {
     const aboutDialogVisible = ref(false)
