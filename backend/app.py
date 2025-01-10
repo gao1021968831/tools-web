@@ -1,3 +1,4 @@
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utils.ip_tools import (
@@ -15,6 +16,8 @@ from utils.logger import app_logger, api_logger
 import time
 
 app = Flask(__name__)
+# 配置代理中间件，根据实际的代理层数调整参数
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 CORS(app)
 
 # 请求计时中间件
@@ -22,20 +25,39 @@ CORS(app)
 def before_request():
     request.start_time = time.time()
 
+def get_client_ip():
+    """获取真实的客户端IP地址"""
+    # 按优先级依次尝试获取
+    if request.headers.get('X-Forwarded-For'):
+        # 如果有多个IP，取第一个（最原始的客户端IP）
+        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    elif request.headers.get('X-Real-IP'):
+        return request.headers.get('X-Real-IP')
+    else:
+        return request.remote_addr
+
 @app.after_request
 def after_request(response):
-    # 计算请求处理时间
     duration = time.time() - request.start_time
+    client_ip = get_client_ip()
     
-    # 记录请求信息
-    api_logger.info(
-        f"Method: {request.method} | "
-        f"Path: {request.path} | "
-        f"Status: {response.status_code} | "
-        f"Duration: {duration:.3f}s | "
-        f"IP: {request.remote_addr} | "
-        f"User-Agent: {request.headers.get('User-Agent')}"
-    )
+    # 扩展的请求信息记录
+    request_info = {
+        "method": request.method,
+        "path": request.path,
+        "status_code": response.status_code,
+        "duration": f"{duration:.3f}s",
+        "client_ip": client_ip,
+        "x_forwarded_for": request.headers.get('X-Forwarded-For', '-'),
+        "x_real_ip": request.headers.get('X-Real-IP', '-'),
+        "host": request.headers.get('Host', '-'),
+        "user_agent": request.headers.get('User-Agent', '-'),
+        "referer": request.headers.get('Referer', '-')
+    }
+    
+    # 格式化日志消息
+    log_message = " | ".join([f"{k}: {v}" for k, v in request_info.items()])
+    api_logger.info(log_message)
     
     return response
 
@@ -206,6 +228,20 @@ def query_dns():
         return jsonify({'data': results})
     except Exception as e:
         app_logger.error(f"DNS query failed - Domain: {domain}", exc_info=True)
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/ip/current-location', methods=['GET'])
+def get_current_ip_location():
+    try:
+        # 获取客户端真实IP
+        client_ip = get_client_ip()
+        
+        # 查询IP归属地
+        result = query_ip_location(client_ip)
+        api_logger.info(f"Current IP location query successful - IP: {client_ip}")
+        return jsonify({'data': result})
+    except Exception as e:
+        app_logger.error(f"Current IP location query failed - IP: {client_ip}", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':

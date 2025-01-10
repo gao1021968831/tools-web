@@ -54,4 +54,12 @@ export function queryDns(data) {
     method: 'post',
     data
   })
+}
+
+// 获取当前IP归属地
+export function getCurrentIpLocation() {
+  return request({
+    url: '/api/ip/current-location',
+    method: 'get'
+  })
 } 
