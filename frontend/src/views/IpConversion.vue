@@ -8,8 +8,8 @@
       <el-form @submit.prevent="convert" class="conversion-form">
         <el-form-item class="radio-group-item">
           <el-radio-group v-model="direction" class="direction-radio">
-            <el-radio-button label="v4tov6">IPv4转IPv6</el-radio-button>
-            <el-radio-button label="v6tov4">IPv6转IPv4</el-radio-button>
+            <el-radio :value="'v4tov6'">IPv4 转 IPv6</el-radio>
+            <el-radio :value="'v6tov4'">IPv6 转 IPv4</el-radio>
           </el-radio-group>
         </el-form-item>
 

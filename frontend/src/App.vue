@@ -31,10 +31,19 @@
             <el-icon><Operation /></el-icon>
             子网划分
           </el-menu-item>
+          <el-menu-item index="/ip-location">
+            <el-icon><Location /></el-icon>
+            IP归属地
+          </el-menu-item>
+          <el-menu-item index="/dns-query">
+            <el-icon><Connection /></el-icon>
+            DNS查询
+          </el-menu-item>
         </el-menu>
         <el-button 
           class="about-btn" 
-          type="text" 
+          type="primary"
+          link
           @click="showAbout">
           <el-icon><InfoFilled /></el-icon>
           关于
@@ -52,26 +61,55 @@
 
     <el-footer class="mobile-footer" height="50px">
       <div class="mobile-nav">
-        <router-link to="/network-calc" class="nav-item" active-class="active">
-          <el-icon><Monitor /></el-icon>
-          <span>网段计算</span>
+        <router-link to="/network-calc" class="nav-item" custom v-slot="{ navigate, isActive }">
+          <div class="nav-item" :class="{ active: isActive }" @click="navigate">
+            <el-icon><Monitor /></el-icon>
+            <span>网段计算</span>
+          </div>
         </router-link>
-        <router-link to="/ip-summary" class="nav-item" active-class="active">
-          <el-icon><Collection /></el-icon>
-          <span>IP汇总</span>
+        
+        <router-link to="/ip-summary" class="nav-item" custom v-slot="{ navigate, isActive }">
+          <div class="nav-item" :class="{ active: isActive }" @click="navigate">
+            <el-icon><Collection /></el-icon>
+            <span>IP汇总</span>
+          </div>
         </router-link>
-        <router-link to="/ip-conversion" class="nav-item" active-class="active">
-          <el-icon><Switch /></el-icon>
-          <span>IP转换</span>
+        
+        <router-link to="/ip-conversion" class="nav-item" custom v-slot="{ navigate, isActive }">
+          <div class="nav-item" :class="{ active: isActive }" @click="navigate">
+            <el-icon><Switch /></el-icon>
+            <span>IP转换</span>
+          </div>
         </router-link>
-        <router-link to="/ip-format" class="nav-item" active-class="active">
-          <el-icon><Operation /></el-icon>
-          <span>格式转换</span>
+        
+        <router-link to="/ip-format" class="nav-item" custom v-slot="{ navigate, isActive }">
+          <div class="nav-item" :class="{ active: isActive }" @click="navigate">
+            <el-icon><Operation /></el-icon>
+            <span>格式转换</span>
+          </div>
         </router-link>
-        <router-link to="/subnet-calc" class="nav-item" active-class="active">
-          <el-icon><Operation /></el-icon>
-          <span>子网划分</span>
+        
+        <router-link to="/subnet-calc" class="nav-item" custom v-slot="{ navigate, isActive }">
+          <div class="nav-item" :class="{ active: isActive }" @click="navigate">
+            <el-icon><Operation /></el-icon>
+            <span>子网划分</span>
+          </div>
         </router-link>
+        
+        <router-link to="/ip-location" class="nav-item" custom v-slot="{ navigate, isActive }">
+          <div class="nav-item" :class="{ active: isActive }" @click="navigate">
+            <el-icon><Location /></el-icon>
+            <span>归属地</span>
+          </div>
+        </router-link>
+        
+        <router-link to="/dns-query" class="nav-item" custom v-slot="{ navigate, isActive }">
+          <div class="nav-item" :class="{ active: isActive }" @click="navigate">
+            <el-icon><Connection /></el-icon>
+            <span>DNS查询</span>
+          </div>
+        </router-link>
+        
         <div class="nav-item" @click="showAbout">
           <el-icon><InfoFilled /></el-icon>
           <span>关于</span>
@@ -85,7 +123,7 @@
       width="500px"
       class="about-dialog">
       <div class="about-content">
-        <h3>IP工具集 <span class="version">v1.2.0</span></h3>
+        <h3>IP工具集 <span class="version">v1.3.0</span></h3>
         <p class="desc">一个功能强大的IP地址工具集合，提供多种IP地址相关的计算和转换功能。</p>
         
         <h4>功能列表：</h4>
@@ -110,10 +148,27 @@
             <el-icon><Operation /></el-icon>
             子网划分
           </div>
+          <div class="feature-item">
+            <el-icon><Location /></el-icon>
+            IP归属地
+          </div>
+          <div class="feature-item">
+            <el-icon><Connection /></el-icon>
+            DNS查询
+          </div>
         </div>
 
         <h4>更新记录：</h4>
         <div class="update-list">
+          <div class="update-item">
+            <div class="version-tag">v1.3.0</div>
+            <ul>
+              <li>✨ 新增IP归属地查询功能</li>
+              <li>✨ 新增DNS记录查询功能</li>
+              <li>🎨 优化子网划分界面</li>
+              <li>🐛 修复子网计算问题</li>
+            </ul>
+          </div>
           <div class="update-item">
             <div class="version-tag">v1.2.0</div>
             <ul>
@@ -146,7 +201,7 @@
         <div class="footer">
           <p>作者：gcg</p>
           <p>
-            <a href="https://github.com/yourusername/ip-tools" target="_blank">
+            <a href="https://github.com/gcg88/ip-tools" target="_blank">
               GitHub 仓库
             </a>
           </p>
@@ -158,7 +213,7 @@
 
 <script>
 import { ref } from 'vue'
-import { Monitor, Collection, Switch, InfoFilled, Operation } from '@element-plus/icons-vue'
+import { Monitor, Collection, Switch, InfoFilled, Operation, Location, Connection } from '@element-plus/icons-vue'
 
 export default {
   name: 'App',
@@ -167,7 +222,9 @@ export default {
     Collection,
     Switch,
     InfoFilled,
-    Operation
+    Operation,
+    Location,
+    Connection
   },
   setup() {
     const showAboutDialog = ref(false)
@@ -486,6 +543,7 @@ body {
   font-size: 12px;
   padding: 4px 0;
   flex: 1;
+  cursor: pointer;
 }
 
 .nav-item .el-icon {

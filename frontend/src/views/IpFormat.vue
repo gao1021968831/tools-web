@@ -8,12 +8,12 @@
       <el-form @submit.prevent="convert" class="page-form">
         <el-form-item class="radio-group-item">
           <el-radio-group v-model="convertType" class="format-radio">
-            <el-radio-button label="dec2bin">十进制转二进制</el-radio-button>
-            <el-radio-button label="bin2dec">二进制转十进制</el-radio-button>
-            <el-radio-button label="dec2hex">十进制转十六进制</el-radio-button>
-            <el-radio-button label="hex2dec">十六进制转十进制</el-radio-button>
-            <el-radio-button label="mask2cidr">掩码转CIDR</el-radio-button>
-            <el-radio-button label="cidr2mask">CIDR转掩码</el-radio-button>
+            <el-radio :value="'dec2bin'">十进制转二进制</el-radio>
+            <el-radio :value="'bin2dec'">二进制转十进制</el-radio>
+            <el-radio :value="'dec2hex'">十进制转十六进制</el-radio>
+            <el-radio :value="'hex2dec'">十六进制转十进制</el-radio>
+            <el-radio :value="'mask2cidr'">掩码转CIDR</el-radio>
+            <el-radio :value="'cidr2mask'">CIDR转掩码</el-radio>
           </el-radio-group>
         </el-form-item>
 

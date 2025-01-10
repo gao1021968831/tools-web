@@ -8,8 +8,9 @@ from utils.ip_tools import (
     ip_dec_to_bin, ip_bin_to_dec,
     ip_dec_to_hex, ip_hex_to_dec,
     mask_to_cidr, cidr_to_mask,
-    divide_network
+    divide_network, query_ip_location
 )
+from utils.dns_tools import query_dns_records
 
 app = Flask(__name__)
 CORS(app)
@@ -67,7 +68,7 @@ def convert_ip():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@app.route('/ip/format', methods=['POST'])
+@app.route('/api/ip/format', methods=['POST'])
 def format_ip():
     try:
         data = request.get_json()
@@ -104,7 +105,7 @@ def format_ip():
     except Exception as e:
         return jsonify({'error': f'转换失败: {str(e)}'}), 500
 
-@app.route('/network/divide', methods=['POST'])
+@app.route('/api/network/divide', methods=['POST'])
 def divide_subnet():
     try:
         data = request.json
@@ -117,6 +118,42 @@ def divide_subnet():
             
         result = divide_network(network, divide_type, value)
         return jsonify({'data': result})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/ip/location', methods=['POST'])
+def get_ip_location():
+    try:
+        data = request.json
+        ips = data.get('ips', [])
+        
+        if not ips:
+            return jsonify({'error': 'IP列表不能为空'}), 400
+            
+        results = []
+        for ip in ips:
+            result = query_ip_location(ip.strip())
+            results.append(result)
+            
+        return jsonify({'data': results})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/dns/query', methods=['POST'])
+def query_dns():
+    try:
+        data = request.json
+        domain = data.get('domain')
+        record_types = data.get('types', [])
+        
+        if not domain:
+            return jsonify({'error': '域名不能为空'}), 400
+            
+        if not record_types:
+            return jsonify({'error': '记录类型不能为空'}), 400
+            
+        results = query_dns_records(domain, record_types)
+        return jsonify({'data': results})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 

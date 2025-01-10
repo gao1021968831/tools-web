@@ -4,6 +4,8 @@ import IpSummary from '../views/IpSummary.vue'
 import IpConversion from '../views/IpConversion.vue'
 import IpFormat from '../views/IpFormat.vue'
 import SubnetCalc from '../views/SubnetCalc.vue'
+import IpLocation from '../views/IpLocation.vue'
+import DnsQuery from '../views/DnsQuery.vue'
 
 const routes = [
   {
@@ -34,6 +36,16 @@ const routes = [
     path: '/subnet-calc',
     name: 'SubnetCalc',
     component: SubnetCalc
+  },
+  {
+    path: '/ip-location',
+    name: 'IpLocation',
+    component: IpLocation
+  },
+  {
+    path: '/dns-query',
+    name: 'DnsQuery',
+    component: DnsQuery
   }
 ]
 

@@ -1,5 +1,6 @@
 import ipaddress
 import socket
+import requests
 
 def get_network_info(ip, mask):
     """计算网络信息"""
@@ -190,42 +191,101 @@ def cidr_to_mask(cidr):
         raise ValueError(str(e))
 
 def divide_network(network, divide_type, value):
-    """划分子网"""
+    """
+    划分子网
+    :param network: 主网段，如 '192.168.0.0/24'
+    :param divide_type: 划分方式，'count' 表示按子网数量，'hosts' 表示按主机数量
+    :param value: 划分值，当 divide_type 为 'count' 时表示子网数量，为 'hosts' 时表示每个子网的主机数
+    :return: 划分结果列表
+    """
     try:
-        # 解析主网段
-        net = ipaddress.ip_network(network, strict=False)
+        net = ipaddress.ip_network(network)
         
         if divide_type == 'count':
             # 按子网数量划分
-            required_bits = (value - 1).bit_length()
-            new_prefix = net.prefixlen + required_bits
+            subnets_needed = int(value)
+            # 计算所需的额外位数
+            bits_needed = (subnets_needed - 1).bit_length()
+            new_prefix = net.prefixlen + bits_needed
+            
             if new_prefix > 32:
-                raise ValueError("子网数量过大，超出可划分范围")
-        else:
+                raise ValueError('子网数量过大')
+                
+        else:  # hosts
             # 按主机数量划分
-            required_hosts = value + 2  # 加上网络地址和广播地址
-            required_bits = (32 - (required_hosts - 1).bit_length())
-            if required_bits < net.prefixlen:
-                raise ValueError("每个子网的主机数量过大，超出可划分范围")
-            new_prefix = required_bits
-
+            hosts_needed = int(value)
+            # 计算所需的主机位数（不需要+2，因为ipaddress.hosts()已经考虑了网络地址和广播地址）
+            host_bits = hosts_needed.bit_length()
+            new_prefix = 32 - host_bits
+            
+            if new_prefix < net.prefixlen:
+                raise ValueError('主机数量过大')
+            
         # 生成子网
         subnets = list(net.subnets(new_prefix=new_prefix))
+        results = []
         
-        # 格式化结果
-        result = []
+        # 只返回需要的子网数量
+        if divide_type == 'count':
+            subnets = subnets[:value]
+            
         for subnet in subnets:
-            result.append({
+            hosts = list(subnet.hosts())
+            results.append({
                 'subnet': str(subnet),
                 'netmask': str(subnet.netmask),
-                'hosts': subnet.num_addresses - 2,
-                'range': f"{subnet.network_address + 1} - {subnet.broadcast_address - 1}"
+                'network': str(subnet.network_address),
+                'broadcast': str(subnet.broadcast_address),
+                'hosts': subnet.num_addresses - 2,  # 减去网络地址和广播地址
+                'range': f"{hosts[0]} - {hosts[-1]}" if hosts else 'N/A'
             })
-            
-            # 如果是按子网数量划分，只返回需要的数量
-            if divide_type == 'count' and len(result) >= value:
-                break
-                
-        return result
+        
+        return results
     except ValueError as e:
-        raise ValueError(f"子网划分错误: {str(e)}") 
+        raise ValueError(f'网段格式错误: {str(e)}')
+    except Exception as e:
+        raise Exception(f'划分失败: {str(e)}')
+
+def query_ip_location(ip):
+    """查询IP地址归属地"""
+    try:
+        # 判断IP类型
+        try:
+            socket.inet_pton(socket.AF_INET, ip)
+            ip_type = 'ipv4'
+        except socket.error:
+            try:
+                socket.inet_pton(socket.AF_INET6, ip)
+                ip_type = 'ipv6'
+            except socket.error:
+                raise ValueError("无效的IP地址格式")
+
+        # 调用IP地址查询API
+        api_url = f"http://ip-api.com/json/{ip}?lang=zh-CN"
+        response = requests.get(api_url, timeout=5)
+        data = response.json()
+
+        if data['status'] == 'success':
+            return {
+                'ip': ip,
+                'country': data.get('country', '未知'),
+                'region': data.get('regionName', '未知'),
+                'city': data.get('city', '未知'),
+                'isp': data.get('isp', '未知')
+            }
+        else:
+            return {
+                'ip': ip,
+                'country': '查询失败',
+                'region': '未知',
+                'city': '未知',
+                'isp': '未知'
+            }
+    except Exception as e:
+        return {
+            'ip': ip,
+            'country': f'查询错误: {str(e)}',
+            'region': '未知',
+            'city': '未知',
+            'isp': '未知'
+        } 
