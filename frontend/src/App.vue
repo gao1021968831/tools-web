@@ -27,6 +27,10 @@
             <el-icon><Operation /></el-icon>
             IP格式转换
           </el-menu-item>
+          <el-menu-item index="/subnet-calc">
+            <el-icon><Operation /></el-icon>
+            子网划分
+          </el-menu-item>
         </el-menu>
         <el-button 
           class="about-btn" 
@@ -64,6 +68,10 @@
           <el-icon><Operation /></el-icon>
           <span>格式转换</span>
         </router-link>
+        <router-link to="/subnet-calc" class="nav-item" active-class="active">
+          <el-icon><Operation /></el-icon>
+          <span>子网划分</span>
+        </router-link>
         <div class="nav-item" @click="showAbout">
           <el-icon><InfoFilled /></el-icon>
           <span>关于</span>
@@ -72,38 +80,76 @@
     </el-footer>
 
     <el-dialog
-      v-model="aboutDialogVisible"
+      v-model="showAboutDialog"
       title="关于"
-      width="400px"
-      :close-on-click-modal="true"
-      class="about-dialog"
-      center>
+      width="500px"
+      class="about-dialog">
       <div class="about-content">
-        <div class="about-header">
-          <el-icon class="logo-icon" size="50"><Monitor /></el-icon>
-          <h2>IP工具集</h2>
-          <div class="version">Version 1.0</div>
+        <h3>IP工具集 <span class="version">v1.2.0</span></h3>
+        <p class="desc">一个功能强大的IP地址工具集合，提供多种IP地址相关的计算和转换功能。</p>
+        
+        <h4>功能列表：</h4>
+        <div class="feature-list">
+          <div class="feature-item">
+            <el-icon><Monitor /></el-icon>
+            网段计算
+          </div>
+          <div class="feature-item">
+            <el-icon><Collection /></el-icon>
+            IP汇总
+          </div>
+          <div class="feature-item">
+            <el-icon><Switch /></el-icon>
+            IP转换
+          </div>
+          <div class="feature-item">
+            <el-icon><Operation /></el-icon>
+            格式转换
+          </div>
+          <div class="feature-item">
+            <el-icon><Operation /></el-icon>
+            子网划分
+          </div>
         </div>
-        <div class="about-body">
-          <h3>功能特性</h3>
-          <div class="feature-list">
-            <div class="feature-item">
-              <el-icon><Monitor /></el-icon>
-              <span>网段计算</span>
-            </div>
-            <div class="feature-item">
-              <el-icon><Collection /></el-icon>
-              <span>IP汇总</span>
-            </div>
-            <div class="feature-item">
-              <el-icon><Switch /></el-icon>
-              <span>IP转换</span>
-            </div>
+
+        <h4>更新记录：</h4>
+        <div class="update-list">
+          <div class="update-item">
+            <div class="version-tag">v1.2.0</div>
+            <ul>
+              <li>✨ 新增子网划分功能</li>
+              <li>🎨 优化表格显示</li>
+              <li>⚡️ 改进计算性能</li>
+              <li>📱 完善移动端适配</li>
+            </ul>
           </div>
-          <div class="about-footer">
-            <p>作者: gcg</p>
-            <p>© 2024 All Rights Reserved</p>
+          <div class="update-item">
+            <div class="version-tag">v1.1.0</div>
+            <ul>
+              <li>✨ 新增IP格式转换功能</li>
+              <li>🎨 优化移动端适配</li>
+              <li>🐛 修复已知问题</li>
+              <li>⚡️ 性能优化</li>
+            </ul>
           </div>
+          <div class="update-item">
+            <div class="version-tag">v1.0.0</div>
+            <ul>
+              <li>🎉 首次发布</li>
+              <li>✨ 实现网段计算功能</li>
+              <li>✨ 实现IP汇总功能</li>
+              <li>✨ 实现IPv4/IPv6转换功能</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>作者：gcg</p>
+          <p>
+            <a href="https://github.com/yourusername/ip-tools" target="_blank">
+              GitHub 仓库
+            </a>
+          </p>
         </div>
       </div>
     </el-dialog>
@@ -124,12 +170,12 @@ export default {
     Operation
   },
   setup() {
-    const aboutDialogVisible = ref(false)
+    const showAboutDialog = ref(false)
     const showAbout = () => {
-      aboutDialogVisible.value = true
+      showAboutDialog.value = true
     }
     return {
-      aboutDialogVisible,
+      showAboutDialog,
       showAbout
     }
   }
@@ -503,5 +549,28 @@ body {
   .feature-item {
     padding: 8px 15px;
   }
+}
+
+.update-list {
+  margin: 10px 0;
+}
+
+.update-item {
+  margin-bottom: 15px;
+}
+
+.version-tag {
+  font-weight: bold;
+  color: var(--el-color-primary);
+  margin-bottom: 5px;
+}
+
+.update-item ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.update-item li {
+  margin: 3px 0;
 }
 </style> 

@@ -7,7 +7,8 @@ from utils.ip_tools import (
     convert_ip_v6_to_v4,
     ip_dec_to_bin, ip_bin_to_dec,
     ip_dec_to_hex, ip_hex_to_dec,
-    mask_to_cidr, cidr_to_mask
+    mask_to_cidr, cidr_to_mask,
+    divide_network
 )
 
 app = Flask(__name__)
@@ -102,6 +103,22 @@ def format_ip():
 
     except Exception as e:
         return jsonify({'error': f'转换失败: {str(e)}'}), 500
+
+@app.route('/network/divide', methods=['POST'])
+def divide_subnet():
+    try:
+        data = request.json
+        network = data.get('network')
+        divide_type = data.get('divideType')
+        value = data.get('value')
+        
+        if not all([network, divide_type, value]):
+            return jsonify({'error': '参数不完整'}), 400
+            
+        result = divide_network(network, divide_type, value)
+        return jsonify({'data': result})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
     app.run(debug=True) 

@@ -30,4 +30,12 @@ export function formatIp(data) {
     method: 'post',
     data
   })
+}
+
+export function divideSubnet(data) {
+  return request({
+    url: '/network/divide',
+    method: 'post',
+    data
+  })
 } 

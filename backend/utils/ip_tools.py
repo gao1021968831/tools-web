@@ -187,4 +187,45 @@ def cidr_to_mask(cidr):
         
         return '.'.join(parts)
     except ValueError as e:
-        raise ValueError(str(e)) 
+        raise ValueError(str(e))
+
+def divide_network(network, divide_type, value):
+    """划分子网"""
+    try:
+        # 解析主网段
+        net = ipaddress.ip_network(network, strict=False)
+        
+        if divide_type == 'count':
+            # 按子网数量划分
+            required_bits = (value - 1).bit_length()
+            new_prefix = net.prefixlen + required_bits
+            if new_prefix > 32:
+                raise ValueError("子网数量过大，超出可划分范围")
+        else:
+            # 按主机数量划分
+            required_hosts = value + 2  # 加上网络地址和广播地址
+            required_bits = (32 - (required_hosts - 1).bit_length())
+            if required_bits < net.prefixlen:
+                raise ValueError("每个子网的主机数量过大，超出可划分范围")
+            new_prefix = required_bits
+
+        # 生成子网
+        subnets = list(net.subnets(new_prefix=new_prefix))
+        
+        # 格式化结果
+        result = []
+        for subnet in subnets:
+            result.append({
+                'subnet': str(subnet),
+                'netmask': str(subnet.netmask),
+                'hosts': subnet.num_addresses - 2,
+                'range': f"{subnet.network_address + 1} - {subnet.broadcast_address - 1}"
+            })
+            
+            # 如果是按子网数量划分，只返回需要的数量
+            if divide_type == 'count' and len(result) >= value:
+                break
+                
+        return result
+    except ValueError as e:
+        raise ValueError(f"子网划分错误: {str(e)}") 

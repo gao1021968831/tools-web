@@ -3,6 +3,7 @@ import NetworkCalc from '../views/NetworkCalc.vue'
 import IpSummary from '../views/IpSummary.vue'
 import IpConversion from '../views/IpConversion.vue'
 import IpFormat from '../views/IpFormat.vue'
+import SubnetCalc from '../views/SubnetCalc.vue'
 
 const routes = [
   {
@@ -28,6 +29,11 @@ const routes = [
     path: '/ip-format',
     name: 'IpFormat',
     component: IpFormat
+  },
+  {
+    path: '/subnet-calc',
+    name: 'SubnetCalc',
+    component: SubnetCalc
   }
 ]
 
