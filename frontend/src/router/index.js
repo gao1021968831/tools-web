@@ -46,6 +46,11 @@ const routes = [
     path: '/dns-query',
     name: 'DnsQuery',
     component: DnsQuery
+  },
+  {
+    path: '/doc-convert',
+    name: 'DocConvert',
+    component: () => import('../views/DocConvert.vue')
   }
 ]
 

@@ -1,5 +1,5 @@
 from werkzeug.middleware.proxy_fix import ProxyFix
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from utils.ip_tools import (
     get_network_info, 
@@ -14,11 +14,22 @@ from utils.ip_tools import (
 from utils.dns_tools import query_dns_records
 from utils.logger import app_logger, api_logger
 import time
+import os
+from werkzeug.utils import secure_filename
+from utils.doc_tools import DocConverter
+import atexit
+import schedule
+import threading
+import shutil
+from urllib.parse import quote
 
 app = Flask(__name__)
 # 配置代理中间件，根据实际的代理层数调整参数
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 CORS(app)
+
+# 初始化文档转换器
+doc_converter = DocConverter()
 
 # 请求计时中间件
 @app.before_request
@@ -59,6 +70,9 @@ def after_request(response):
     log_message = " | ".join([f"{k}: {v}" for k, v in request_info.items()])
     api_logger.info(log_message)
     
+    # 添加必要的响应头
+    if response.mimetype == 'application/pdf' or response.mimetype == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        response.headers['Access-Control-Expose-Headers'] = 'Content-Disposition'
     return response
 
 @app.errorhandler(Exception)
@@ -243,6 +257,129 @@ def get_current_ip_location():
     except Exception as e:
         app_logger.error(f"Current IP location query failed - IP: {client_ip}", exc_info=True)
         return jsonify({'error': str(e)}), 400
+
+@app.route('/api/doc/convert', methods=['POST'])
+def convert_document():
+    """文档转换接口"""
+    try:
+        if 'file' not in request.files:
+            app_logger.warning("No file uploaded")
+            return jsonify({'error': '没有上传文件'}), 400
+            
+        file = request.files['file']
+        if file.filename == '':
+            app_logger.warning("No file selected")
+            return jsonify({'error': '未选择文件'}), 400
+            
+        if file:
+            # 处理中文文件名
+            filename = file.filename
+            # 仅对文件名中的特殊字符进行安全处理，保留中文
+            safe_filename = "".join([c for c in filename if c.isalnum() or c.isspace() or c in '._-()[]{}中文韩文日文'])
+            file_ext = os.path.splitext(filename)[1].lower()
+            
+            # 记录详细的文件信息
+            app_logger.info(f"Processing file conversion request - "
+                          f"Original filename: {filename}, "
+                          f"Safe filename: {safe_filename}, "
+                          f"Extension: {file_ext}, "
+                          f"MIME: {file.mimetype}, "
+                          f"Size: {file.content_length/1024:.2f}KB")
+            
+            # 验证文件类型
+            valid_pdf = (file_ext == '.pdf' and 
+                        (file.mimetype == 'application/pdf' or 
+                         file.mimetype == 'application/octet-stream'))
+            
+            valid_docx = (file_ext == '.docx' and 
+                         (file.mimetype == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' or
+                          file.mimetype == 'application/msword' or
+                          file.mimetype == 'application/octet-stream'))
+            
+            if not (valid_pdf or valid_docx):
+                app_logger.warning(f"Invalid file type - MIME: {file.mimetype}, Extension: {file_ext}")
+                return jsonify({'error': '不支持的文件格式，仅支持PDF和DOCX文件'}), 400
+            
+            # 保存文件
+            file_path = os.path.join(doc_converter.upload_folder, safe_filename)
+            file.save(file_path)
+            app_logger.info(f"File saved successfully - Path: {file_path}")
+            
+            try:
+                conversion_type = "PDF to DOCX" if valid_pdf else "DOCX to PDF"
+                app_logger.info(f"Starting {conversion_type} conversion for file: {safe_filename}")
+                
+                result = doc_converter.pdf_to_docx(file_path, safe_filename) if valid_pdf else \
+                         doc_converter.docx_to_pdf(file_path, safe_filename)
+                
+                if result['status'] == 'success':
+                    app_logger.info(f"Conversion successful - "
+                                  f"Input: {safe_filename}, "
+                                  f"Output: {result['output_filename']}, "
+                                  f"Size: {os.path.getsize(result['output_file'])/1024:.2f}KB")
+                    
+                    # 对文件名进行 URL 编码
+                    encoded_filename = quote(result['output_filename'])
+                    
+                    response = send_file(
+                        result['output_file'],
+                        as_attachment=True,
+                        download_name=result['output_filename']
+                    )
+                    
+                    # 使用 RFC 5987 编码格式设置 Content-Disposition
+                    response.headers['Content-Disposition'] = \
+                        f"attachment; filename=\"{encoded_filename}\"; filename*=UTF-8''{encoded_filename}"
+                    
+                    # 在发送文件后尝试清理
+                    @response.call_on_close
+                    def cleanup():
+                        try:
+                            time.sleep(1)  # 等待文件处理完成
+                            if 'source_file' in result:
+                                doc_converter._cleanup_files(result['source_file'])
+                                app_logger.info(f"Cleanup completed for source file: {result['source_file']}")
+                        except Exception as e:
+                            app_logger.warning(f"Cleanup error: {str(e)}", exc_info=True)
+                    
+                    return response
+                else:
+                    app_logger.error(f"Conversion failed - Error: {result['message']}")
+                    return jsonify({'error': result['message']}), 500
+                    
+            except Exception as e:
+                app_logger.error(f"Conversion error - File: {safe_filename}, Error: {str(e)}", exc_info=True)
+                doc_converter._cleanup_files(file_path)
+                raise e
+                
+    except Exception as e:
+        app_logger.error(f"Document conversion failed - Error: {str(e)}", exc_info=True)
+        return jsonify({'error': f'文件转换失败: {str(e)}'}), 500
+
+def cleanup_temp_files():
+    """清理临时文件"""
+    try:
+        shutil.rmtree(doc_converter.upload_folder)
+        shutil.rmtree(doc_converter.output_folder)
+        os.makedirs(doc_converter.upload_folder)
+        os.makedirs(doc_converter.output_folder)
+        app_logger.info("Temporary files cleaned up")
+    except Exception as e:
+        app_logger.error(f"Failed to cleanup temporary files: {str(e)}")
+
+def run_schedule():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+# 设置定时清理任务
+schedule.every().day.at("00:00").do(cleanup_temp_files)
+scheduler_thread = threading.Thread(target=run_schedule)
+scheduler_thread.daemon = True
+scheduler_thread.start()
+
+# 程序退出时清理
+atexit.register(cleanup_temp_files)
 
 if __name__ == '__main__':
     app_logger.info("Application starting...")

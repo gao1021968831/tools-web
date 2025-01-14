@@ -39,6 +39,10 @@
             <el-icon><Connection /></el-icon>
             DNS查询
           </el-menu-item>
+          <el-menu-item index="/doc-convert">
+            <el-icon><Document /></el-icon>
+            文档转换
+          </el-menu-item>
         </el-menu>
         <el-button 
           class="about-btn" 
@@ -110,6 +114,13 @@
           </div>
         </router-link>
         
+        <router-link to="/doc-convert" class="nav-item" custom v-slot="{ navigate, isActive }">
+          <div class="nav-item" :class="{ active: isActive }" @click="navigate">
+            <el-icon><Document /></el-icon>
+            <span>文档转换</span>
+          </div>
+        </router-link>
+        
         <div class="nav-item" @click="showAbout">
           <el-icon><InfoFilled /></el-icon>
           <span>关于</span>
@@ -158,42 +169,42 @@
           </div>
         </div>
 
-        <h4>更新记录：</h4>
+        <h4>更新日志：</h4>
         <div class="update-list">
           <div class="update-item">
-            <div class="version-tag">v1.3.0</div>
+            <div class="version-tag">v1.3.0 (2024-01-14)</div>
             <ul>
-              <li>✨ 新增IP归属地查询功能</li>
-              <li>✨ 新增DNS记录查询功能</li>
-              <li>🎨 优化子网划分界面</li>
-              <li>🐛 修复子网计算问题</li>
-            </ul>
-          </div>
-          <div class="update-item">
-            <div class="version-tag">v1.2.0</div>
-            <ul>
-              <li>✨ 新增子网划分功能</li>
-              <li>🎨 优化表格显示</li>
-              <li>⚡️ 改进计算性能</li>
+              <li>✨ 新增文档转换功能</li>
+              <li>✨ 支持 PDF 和 Word 文档互转</li>
+              <li>🎨 优化文件上传体验</li>
               <li>📱 完善移动端适配</li>
             </ul>
           </div>
           <div class="update-item">
-            <div class="version-tag">v1.1.0</div>
+            <div class="version-tag">v1.2.0 (2024-01-10)</div>
             <ul>
-              <li>✨ 新增IP格式转换功能</li>
-              <li>🎨 优化移动端适配</li>
+              <li>✨ 新增 DNS 记录查询功能</li>
+              <li>✨ 新增 IP 归属地查询</li>
+              <li>🎨 优化查询结果显示</li>
               <li>🐛 修复已知问题</li>
-              <li>⚡️ 性能优化</li>
             </ul>
           </div>
           <div class="update-item">
-            <div class="version-tag">v1.0.0</div>
+            <div class="version-tag">v1.1.0 (2024-01-05)</div>
+            <ul>
+              <li>✨ 新增子网划分功能</li>
+              <li>🎨 优化界面交互</li>
+              <li>⚡️ 提升计算性能</li>
+              <li>📱 优化移动端显示</li>
+            </ul>
+          </div>
+          <div class="update-item">
+            <div class="version-tag">v1.0.0 (2024-01-01)</div>
             <ul>
               <li>🎉 首次发布</li>
-              <li>✨ 实现网段计算功能</li>
-              <li>✨ 实现IP汇总功能</li>
-              <li>✨ 实现IPv4/IPv6转换功能</li>
+              <li>✨ IP 地址计算功能</li>
+              <li>✨ IP 地址格式转换</li>
+              <li>✨ IPv4/IPv6 转换</li>
             </ul>
           </div>
         </div>
@@ -213,7 +224,7 @@
 
 <script>
 import { ref } from 'vue'
-import { Monitor, Collection, Switch, InfoFilled, Operation, Location, Connection } from '@element-plus/icons-vue'
+import { Monitor, Collection, Switch, InfoFilled, Operation, Location, Connection, Document } from '@element-plus/icons-vue'
 
 export default {
   name: 'App',
@@ -224,7 +235,8 @@ export default {
     InfoFilled,
     Operation,
     Location,
-    Connection
+    Connection,
+    Document
   },
   setup() {
     const showAboutDialog = ref(false)
