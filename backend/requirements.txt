@@ -7,8 +7,5 @@ pdf2docx==0.5.6
 docx2pdf==0.1.8
 python-docx==1.0.1
 PyPDF2==3.0.1
-pywin32==306; platform_system == "Windows"
-pythoncom==0.0.1; platform_system == "Windows"
-win32com==0.0.1; platform_system == "Windows"
 schedule==1.2.1
 Werkzeug==3.0.1 

@@ -1,10 +1,9 @@
 import os
 import shutil
 from pdf2docx import Converter
-from docx2pdf import convert
+import platform
 from utils.logger import app_logger
 import time
-import pythoncom  # 导入 pythoncom
 
 class DocConverter:
     def __init__(self, upload_folder='uploads', output_folder='converted'):
@@ -12,17 +11,28 @@ class DocConverter:
         self.upload_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), upload_folder)
         self.output_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_folder)
         
-        # 确保目录存在，但不清空
+        # 确保目录存在
         for folder in [self.upload_folder, self.output_folder]:
             if not os.path.exists(folder):
                 os.makedirs(folder)
+        
+        # 检查系统类型
+        self.is_windows = platform.system() == 'Windows'
+        if not self.is_windows:
+            try:
+                # 在 Linux 上尝试导入 unoconv
+                import subprocess
+                result = subprocess.run(['which', 'unoconv'], capture_output=True, text=True)
+                if result.returncode != 0:
+                    app_logger.warning("unoconv not found. Please install it using: sudo apt-get install unoconv")
+            except Exception as e:
+                app_logger.error(f"Error checking unoconv: {str(e)}")
 
     def _cleanup_files(self, *files):
         """清理临时文件"""
         for file in files:
             try:
                 if file and os.path.exists(file):
-                    # 添加重试机制
                     max_retries = 3
                     for i in range(max_retries):
                         try:
@@ -31,70 +41,91 @@ class DocConverter:
                             break
                         except PermissionError:
                             if i == max_retries - 1:
-                                app_logger.warning(
-                                    f"Failed to remove file after {max_retries} attempts: {file}")
+                                app_logger.warning(f"Failed to remove file after {max_retries} attempts: {file}")
                             else:
                                 app_logger.info(f"Retry {i+1}/{max_retries} to remove file: {file}")
-                                time.sleep(1)  # 等待1秒后重试
-                else:
-                    app_logger.debug(f"File not found for cleanup: {file}")
+                                time.sleep(1)
             except Exception as e:
-                app_logger.warning(f"Failed to cleanup file {file}: {str(e)}", exc_info=True)
+                app_logger.warning(f"Failed to cleanup file {file}: {str(e)}")
 
-    def _safe_convert_pdf(self, pdf_file, output_file):
-        """安全的PDF转换处理"""
-        cv = None
+    def docx_to_pdf(self, docx_file, original_filename):
+        """Word转PDF"""
         try:
-            cv = Converter(pdf_file)
-            cv.convert(output_file, start=0, end=None, pages=None,
-                      multi_processing=True,
-                      cpu_count=None,
-                      tables_settings={
-                          'text_settings': {
-                              'line_overlap': 0.8,
-                              'font_size_detection': True,  # 启用字体大小检测
-                              'char_inclusion': 0.9,  # 字符包含阈值
-                              'char_distance': 0.3,  # 字符距离阈值
-                          },
-                          'table_settings': {
-                              'min_rows': 1,
-                              'min_cols': 1,
-                              'edge_min_length': 3,
-                              'cell_min_size': 3,
-                          }
-                      },
-                      text_settings={
-                          'line_margin': 0.1,
-                          'line_overlap': 0.9,
-                          'line_break_width': 5,
-                          'line_break_free_space_ratio': 0.1,
-                          'line_separate_threshold': 5,
-                          'line_spacing_threshold': 5,
-                          'line_merge_threshold': 2,
-                          'line_height_threshold': 2,
-                          'line_width_threshold': 2,
-                          'line_alignment_threshold': 0.1,
-                          'preserve_space': True,  # 保留空格
-                          'detect_chinese': True,  # 检测中文
-                          'char_merging_threshold': 0.3,  # 字符合并阈值
-                      },
-                      image_settings={
-                          'min_image_area': 100,
-                          'max_image_area': None,
-                          'min_image_height': 10,
-                          'min_image_width': 10,
-                      },
-                      layout_settings={
-                          'section_height': None,
-                          'section_width': None,
-                          'section_overlap': 0.9,
-                          'section_margin': 0.1,
-                          'preserve_layout': True,  # 保留布局
-                      })
-        finally:
-            if cv:
-                cv.close()
+            # 处理文件名
+            base_name = original_filename
+            if base_name.lower().endswith('.docx'):
+                base_name = base_name[:-5]
+            elif base_name.lower().endswith('.doc'):
+                base_name = base_name[:-4]
+            
+            if not base_name:
+                base_name = "converted"
+                
+            output_filename = f"{base_name}.pdf"
+            output_file = os.path.join(self.output_folder, output_filename)
+            
+            app_logger.info(f"Converting DOCX to PDF: {original_filename} -> {output_filename}")
+            
+            if self.is_windows:
+                # Windows 系统使用 COM
+                try:
+                    import pythoncom
+                    import win32com.client
+                    
+                    pythoncom.CoInitialize()
+                    word = win32com.client.Dispatch("Word.Application")
+                    try:
+                        word.Visible = False
+                        doc = word.Documents.Open(docx_file)
+                        doc.SaveAs2(output_file, FileFormat=17)  # 17 = PDF
+                        doc.Close()
+                    finally:
+                        word.Quit()
+                        pythoncom.CoUninitialize()
+                except Exception as e:
+                    app_logger.error(f"Windows COM conversion failed: {str(e)}")
+                    raise
+            else:
+                # Linux 系统使用 unoconv
+                try:
+                    import subprocess
+                    result = subprocess.run(['unoconv', '-f', 'pdf', '-o', output_file, docx_file], 
+                                         capture_output=True, text=True)
+                    if result.returncode != 0:
+                        raise Exception(f"unoconv failed: {result.stderr}")
+                except Exception as e:
+                    app_logger.error(f"Linux unoconv conversion failed: {str(e)}")
+                    raise
+            
+            # 验证输出文件
+            if not os.path.exists(output_file):
+                raise Exception("转换失败，未生成输出文件")
+            
+            output_size = os.path.getsize(output_file)
+            if output_size == 0:
+                raise Exception("转换失败，生成的文件为空")
+            
+            app_logger.info(f"Conversion successful. Output file: {output_filename}, size: {output_size/1024:.2f}KB")
+            
+            return {
+                'status': 'success',
+                'message': '转换成功',
+                'output_file': output_file,
+                'output_filename': output_filename,
+                'source_file': docx_file
+            }
+                
+        except Exception as e:
+            app_logger.error(f"DOCX to PDF conversion failed: {str(e)}", exc_info=True)
+            self._cleanup_files(docx_file)
+            if 'output_file' in locals():
+                self._cleanup_files(output_file)
+            return {
+                'status': 'error',
+                'message': f'转换失败: {str(e)}'
+            }
 
+    # PDF 转 Word 的方法保持不变，因为 pdf2docx 库在 Linux 上也能工作
     def pdf_to_docx(self, pdf_file, original_filename):
         """PDF转Word"""
         try:
@@ -147,79 +178,6 @@ class DocConverter:
         except Exception as e:
             app_logger.error(f"PDF to DOCX conversion failed: {str(e)}", exc_info=True)
             raise
-
-    def docx_to_pdf(self, docx_file, original_filename):
-        """Word转PDF"""
-        try:
-            pythoncom.CoInitialize()
-            try:
-                import win32com.client
-                word = win32com.client.Dispatch("Word.Application")
-                try:
-                    word.Visible = False
-                    
-                    # 修改文件名处理逻辑
-                    base_name = original_filename
-                    if base_name.lower().endswith('.docx'):
-                        base_name = base_name[:-5]  # 移除 .docx
-                    elif base_name.lower().endswith('.doc'):
-                        base_name = base_name[:-4]  # 移除 .doc
-                    
-                    # 确保base_name不为空
-                    if not base_name:
-                        base_name = "converted"
-                        
-                    output_filename = f"{base_name}.pdf"
-                    app_logger.info(f"Converting to PDF with filename: {output_filename}")  # 添加日志
-                    output_file = os.path.join(self.output_folder, output_filename)
-                    
-                    # 打开文档
-                    doc = word.Documents.Open(docx_file)
-                    
-                    try:
-                        # 设置保存选项
-                        wdFormatPDF = 17  # PDF 格式
-                        
-                        # 保存为PDF
-                        doc.SaveAs2(output_file, FileFormat=wdFormatPDF)
-                    finally:
-                        # 关闭文档
-                        doc.Close()
-                    
-                    # 验证输出文件
-                    if not os.path.exists(output_file):
-                        raise Exception("转换失败，未生成输出文件")
-                    
-                    output_size = os.path.getsize(output_file)
-                    if output_size == 0:
-                        raise Exception("转换失败，生成的文件为空")
-                    
-                    app_logger.info(f"Conversion successful. Output file: {output_filename}, size: {output_size/1024/1024:.2f}MB")
-                    
-                    return {
-                        'status': 'success',
-                        'message': '转换成功',
-                        'output_file': output_file,
-                        'output_filename': output_filename,
-                        'source_file': docx_file
-                    }
-                finally:
-                    # 退出 Word
-                    word.Quit()
-            finally:
-                # 确保在完成后取消初始化
-                pythoncom.CoUninitialize()
-                
-        except Exception as e:
-            app_logger.error(f"DOCX to PDF conversion failed: {str(e)}", exc_info=True)
-            # 清理临时文件
-            self._cleanup_files(docx_file)
-            if 'output_file' in locals():
-                self._cleanup_files(output_file)
-            return {
-                'status': 'error',
-                'message': f'转换失败: {str(e)}'
-            } 
 
     def cleanup_old_files(self, max_age_hours=24):
         """清理旧文件"""
